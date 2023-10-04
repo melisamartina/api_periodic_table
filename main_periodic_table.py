@@ -53,8 +53,23 @@ def post_create_periodic_element(element):
 def post_delete_periodic_element(atomic_number):
     response = requests.delete(f"{url}/periodic_elements/{atomic_number}")
     if response.json().get('detail'):
-      print('El elemento no existe.') 
+      print('El elemento no existe.')
     return response.json()
+
+def get_valid_int_input(value: str) -> int:
+    user_input = input(f'Ingrese un valor para {value} (debe ser entero, sino se solicita nuevamente el ingreso): ')
+    return int(user_input) if user_input.isdigit() else get_valid_int_input(value)
+
+def get_valid_float_input(value: str) -> float:
+    user_input = input(f'Ingrese un valor para {value} (debe ser decimal o entero, sino se solicita nuevamente el ingreso): ').replace(',', '.')
+    if user_input.count('.') > 1:
+        print('Ups, tienes más de un punto decimal ingresado.')
+        return get_valid_float_input(value)
+    if user_input.replace('.', '').isdigit():
+        return float(user_input)
+    else:
+        print('La entrada no es válida, debe ser un número decimal o entero.')
+        return get_valid_float_input(value)
 
 def create_periodic_element():
     options = {
@@ -64,17 +79,24 @@ def create_periodic_element():
             4: ["atomic_mass_avg", "Masa atómica del elemento"],
             5: ["description", "Descripción del elemento"]
         }
-
-    element = {
-                "element_name": input('Ingrese un valor para "Nombre del elemento": '),
-                "atomic_number": int(input('Ingrese un valor para "Número atómico del elemento": ')),
-                "element_symbol": input('Ingrese un valor para "Símbolo del elemento": '),
-                "atomic_mass_avg": float(input('Ingrese un valor para "Masa atómica del elemento": ')),
-                "description": input('Ingrese un valor para "Descripción del elemento": ')
-    }
+    
+    elements = True
+    while elements:
+        try:
+            element = {
+                        "element_name": input(f'Ingrese un valor para "{options[1][1]}": '),
+                        "element_symbol": input(f'Ingrese un valor para "{options[2][1]}": '),
+                        "atomic_number": get_valid_int_input(options[3][1]),
+                        "atomic_mass_avg": get_valid_float_input(options[4][1]),
+                        "description": input(f'Ingrese un valor para "{options[5][1]}": ')
+            }
+            elements = False
+        except ValueError:
+            text_to_slow('El valor ingresado es incorrecto, vuelva a agregar nuevamente la información.')
+            continue
 
     if element:
-        text_to_slow('Se insertará el elemento de la siguiente manera: \n')
+        text_to_slow('\nSe insertará el elemento de la siguiente manera: \n\n')
         for value in options.values():
             for key, value_ in element.items():
                 if value[0] == key:
@@ -96,7 +118,7 @@ def create_periodic_element():
 def update_periodic_element(atomic_number):
     response_text = get_periodic_element(atomic_number)
     if response_text:
-        text_to_slow('\nLa información que contiene actualmente el elemento indicado es: \n')
+        text_to_slow('\nLa información que contiene actualmente el elemento indicado es: \n\n')
         text_to_slow(response_text)
 
         options = {
@@ -123,23 +145,32 @@ def update_periodic_element(atomic_number):
             option = int(input())
 
             if option == 1:
-                element = {
-                    "element_name": input('Ingrese un nuevo valor para "Nombre del Elemento": '),
-                    "element_symbol": input('Ingrese un nuevo valor para "Símbolo del Elemento": '),
-                    "atomic_mass_avg": float(input('Ingrese un nuevo valor para "Masa atómica del Elemento": ')),
-                    "description": input('Ingrese un nuevo valor para "Descripción del Elemento": ')
-                }
+                elements = True
+                while elements:
+                    try:
+                        element = {
+                            "element_name": input(f'\nIngrese un nuevo valor para "{options[2][1]}": '),
+                            "element_symbol": input(f'Ingrese un nuevo valor para "{options[3][1]}": '),
+                            "atomic_mass_avg": get_valid_float_input(options[4][1]),
+                            "description": input(f'Ingrese un nuevo valor para "{options[5][1]}": ')
+                        }
+                        elements = False
+                    except ValueError:
+                        text_to_slow('El valor ingresado es incorrecto. Ingresar nuevamente toda la información.')
+                        continue
                 break
-            elif (option > 1 and option <6):
+            elif (1<option<6):
                 field, field_name = options[option]
-                new_value = input(f'Ingrese un nuevo valor para "{field_name}": ')
+                if option == 4:
+                    new_value = get_valid_float_input(field_name)
+                else:
+                    new_value = input(f'\nIngrese un nuevo valor para "{field_name}": ')
                 if new_value:
                     element[field] = new_value
                     break
                 else:
                     text_to_slow('Opción inválida.')
-            elif option == 6:
-                
+            elif option == 6:     
                 break
             elif option == 7:
                 text_to_slow('¡Hasta luego!')
@@ -147,7 +178,7 @@ def update_periodic_element(atomic_number):
         
         if element:
             element["atomic_number"] = atomic_number
-            text_to_slow('Se modificará el elemento de la siguiente manera: \n')
+            text_to_slow('\nSe modificará el elemento de la siguiente manera: \n')
             for value in options.values():
                 for key, value_ in element.items():
                     if value[0] == key:
@@ -195,11 +226,10 @@ def main():
 
         if opcion == "1":
             query = input('Indique el número atómico ó el símbolo del elemento de la tabla periódica: ')
-            print("\n")
             response_text = get_periodic_element(query)
             if response_text:
                 element_name = response_text.split('\n')[0].split(':')[1].strip(' ')
-                print(f'El elemento seleccionado es: "{element_name}".\nLe proporcionamos más información detallada a continuación:\n')
+                print(f'\nEl elemento seleccionado es: "{element_name}".\n\nLe proporcionamos más información detallada a continuación:\n')
                 text_to_slow(response_text)
         elif opcion == "2":
             create_periodic_element()
