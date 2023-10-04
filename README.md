@@ -3,6 +3,9 @@
 
 Esta API contendrá información de la tabla periódica de cada uno de sus elementos. Dentro de ellos encontrarás información descriptiva del elemento, así como lo básico de los mismos, como han de ser "Nombre del elemento, Símbolo del elemento, Número atómico, Masa Atómica, etc."
 
+## Technologies
+
+**_This project has been designed on Python, including the following libraries for its development_**: FastApi and requests.    
 
 ## Run Locally
 
